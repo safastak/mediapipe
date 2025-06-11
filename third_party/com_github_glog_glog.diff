@@ -24,6 +24,94 @@ diff --git a/src/glog/logging.h.in b/src/glog/logging.h.in
 index 4028ccc..483e639 100644
 --- a/src/glog/logging.h.in
 +++ b/src/glog/logging.h.in
+@@ -426,67 +426,67 @@
+ #endif
+ 
+ // Set whether appending a timestamp to the log file name
+-DECLARE_bool(timestamp_in_logfile_name);
++DECLARE_bool(_timestamp_in_logfile_name);
+ 
+ // Set whether log messages go to stdout instead of logfiles
+-DECLARE_bool(logtostdout);
++DECLARE_bool(_logtostdout);
+ 
+ // Set color messages logged to stdout (if supported by terminal).
+-DECLARE_bool(colorlogtostdout);
++DECLARE_bool(_colorlogtostdout);
+ 
+ // Set whether log messages go to stderr instead of logfiles
+-DECLARE_bool(logtostderr);
++DECLARE_bool(_logtostderr);
+ 
+ // Set whether log messages go to stderr in addition to logfiles.
+-DECLARE_bool(alsologtostderr);
++DECLARE_bool(_alsologtostderr);
+ 
+ // Set color messages logged to stderr (if supported by terminal).
+-DECLARE_bool(colorlogtostderr);
++DECLARE_bool(_colorlogtostderr);
+ 
+ // Log messages at a level >= this flag are automatically sent to
+ // stderr in addition to log files.
+-DECLARE_int32(stderrthreshold);
++DECLARE_int32(_stderrthreshold);
+ 
+ // Set whether the log prefix should be prepended to each line of output.
+-DECLARE_bool(log_prefix);
++DECLARE_bool(_log_prefix);
+ 
+ // Set whether the year should be included in the log prefix.
+-DECLARE_bool(log_year_in_prefix);
++DECLARE_bool(_log_year_in_prefix);
+ 
+ // Log messages at a level <= this flag are buffered.
+ // Log messages at a higher level are flushed immediately.
+-DECLARE_int32(logbuflevel);
++DECLARE_int32(_logbuflevel);
+ 
+ // Sets the maximum number of seconds which logs may be buffered for.
+-DECLARE_int32(logbufsecs);
++DECLARE_int32(_logbufsecs);
+ 
+ // Log suppression level: messages logged at a lower level than this
+ // are suppressed.
+-DECLARE_int32(minloglevel);
++DECLARE_int32(_minloglevel);
+ 
+ // If specified, logfiles are written into this directory instead of the
+ // default logging directory.
+-DECLARE_string(log_dir);
++DECLARE_string(_log_dir);
+ 
+ // Set the log file mode.
+-DECLARE_int32(logfile_mode);
++DECLARE_int32(_logfile_mode);
+ 
+ // Sets the path of the directory into which to put additional links
+ // to the log files.
+-DECLARE_string(log_link);
++DECLARE_string(_log_link);
+ 
+-DECLARE_int32(v);  // in vlog_is_on.cc
++DECLARE_int32(_v);  // in vlog_is_on.cc
+ 
+-DECLARE_string(vmodule); // also in vlog_is_on.cc
++DECLARE_string(_vmodule); // also in vlog_is_on.cc
+ 
+ // Sets the maximum log file size (in MB).
+-DECLARE_uint32(max_log_size);
++DECLARE_uint32(_max_log_size);
+ 
+ // Sets whether to avoid logging to the disk if the disk is full.
+-DECLARE_bool(stop_logging_if_full_disk);
++DECLARE_bool(_stop_logging_if_full_disk);
+ 
+ // Use UTC time for logging
+-DECLARE_bool(log_utc_time);
++DECLARE_bool(_log_utc_time);
+ 
+ // Log messages below the GOOGLE_STRIP_LOG level will be compiled away for
+ // security reasons. See LOG(severtiy) below.
 @@ -753,7 +753,7 @@
  // This declaration will allow use to use CHECK macros for user
  // defined classes which have operator<< (e.g., stl_logging.h).
@@ -33,14 +121,483 @@ index 4028ccc..483e639 100644
    return out;
  }
  
-diff --git a/src/logging.cc b/src/logging.cc
+git diff --git a/src/glog/vlog_is_on.h.in b/src/glog/vlog_is_on.h.in
+index 4028ccc..483e639 100644
+--- a/src/glog/vlog_is_on.h.in
++++ b/src/glog/vlog_is_on.h.in
+@@ -67,20 +67,20 @@
+ // We emit an anonymous static int* variable at every VLOG_IS_ON(n) site.
+ // (Normally) the first time every VLOG_IS_ON(n) site is hit,
+ // we determine what variable will dynamically control logging at this site:
+-// it's either FLAGS_v or an appropriate internal variable
++// it's either FLAGS__v or an appropriate internal variable
+ // matching the current source file that represents results of
+ // parsing of --vmodule flag and/or SetVLOGLevel calls.
+ #define VLOG_IS_ON(verboselevel)                                \
+   __extension__  \
+   ({ static @ac_google_namespace@::SiteFlag vlocal__ = {NULL, NULL, 0, NULL};       \
+      @ac_google_namespace@::int32 verbose_level__ = (verboselevel);                    \
+-     (vlocal__.level == NULL ? @ac_google_namespace@::InitVLOG3__(&vlocal__, &FLAGS_v, \
++     (vlocal__.level == NULL ? @ac_google_namespace@::InitVLOG3__(&vlocal__, &FLAGS__v, \
+                         __FILE__, verbose_level__) : *vlocal__.level >= verbose_level__); \
+   })
+ #else
+ // GNU extensions not available, so we do not support --vmodule.
+-// Dynamic value of FLAGS_v always controls the logging level.
+-#define VLOG_IS_ON(verboselevel) (FLAGS_v >= (verboselevel))
++// Dynamic value of FLAGS__v always controls the logging level.
++#define VLOG_IS_ON(verboselevel) (FLAGS__v >= (verboselevel))
+ #endif
+ 
+ // Set VLOG(_IS_ON) level for module_pattern to log_level.
+@@ -90,7 +90,7 @@
+ //	 that have already executed after/during InitGoogleLogging,
+ //	 one needs to supply the exact --vmodule pattern that applied to them.
+ //       (If no --vmodule pattern applied to them
+-//       the value of FLAGS_v will continue to control them.)
++//       the value of FLAGS__v will continue to control them.)
+ extern GLOG_EXPORT int SetVLOGLevel(const char* module_pattern, int log_level);
+ 
+ // Various declarations needed for VLOG_IS_ON above: =========================
+git diff --git a/src/vlog_is_on.cc b/src/vlog_is_on.cc
+index 4028ccc..483e639 100644
+--- a/src/vlog_is_on.cc
++++ b/src/vlog_is_on.cc
+@@ -49,10 +49,10 @@
+ 
+ using std::string;
+ 
+-GLOG_DEFINE_int32(v, 0, "Show all VLOG(m) messages for m <= this."
++GLOG_DEFINE_int32(_v, 0, "Show all VLOG(m) messages for m <= this."
+ " Overridable by --vmodule.");
+ 
+-GLOG_DEFINE_string(vmodule, "", "per-module verbose level."
++GLOG_DEFINE_string(_vmodule, "", "per-module verbose level."
+ " Argument is a comma-separated list of <module name>=<log level>."
+ " <module name> is a glob pattern, matched against the filename base"
+ " (that is, name ignoring .cc/.h./-inl.h)."
+@@ -101,7 +101,7 @@
+ 
+ using glog_internal_namespace_::SafeFNMatch_;
+ 
+-// List of per-module log levels from FLAGS_vmodule.
++// List of per-module log levels from FLAGS__vmodule.
+ // Once created each element is never deleted/modified
+ // except for the vlog_level: other threads will read VModuleInfo blobs
+ // w/o locks and we'll store pointers to vlog_level at VLOG locations
+@@ -132,7 +132,7 @@
+   // Can now parse --vmodule flag and initialize mapping of module-specific
+   // logging levels.
+   inited_vmodule = false;
+-  const char* vmodule = FLAGS_vmodule.c_str();
++  const char* vmodule = FLAGS__vmodule.c_str();
+   const char* sep;
+   VModuleInfo* head = NULL;
+   VModuleInfo* tail = NULL;
+@@ -164,7 +164,7 @@
+ 
+ // This can be called very early, so we use SpinLock and RAW_VLOG here.
+ int SetVLOGLevel(const char* module_pattern, int log_level) {
+-  int result = FLAGS_v;
++  int result = FLAGS__v;
+   size_t const pattern_len = strlen(module_pattern);
+   bool found = false;
+   {
+@@ -228,7 +228,7 @@
+   // VLOG(..) << "The last error was " << strerror(errno)
+   int old_errno = errno;
+ 
+-  // site_default normally points to FLAGS_v
++  // site_default normally points to FLAGS__v
+   int32* site_flag_value = level_default;
+ 
+   // Get basename for file
+git diff --git a/src/utilities.cc b/src/utilities.cc
+index 4028ccc..483e639 100644
+--- a/src/utilities.cc
++++ b/src/utilities.cc
+@@ -141,7 +141,7 @@
+   int depth = GetStackTrace(stack, ARRAYSIZE(stack), skip_count+1);
+   for (int i = 0; i < depth; i++) {
+ #if defined(HAVE_SYMBOLIZE)
+-    if (FLAGS_symbolize_stacktrace) {
++    if (FLAGS__symbolize_stacktrace) {
+       DumpPCAndSymbol(writerfn, arg, stack[i], "    ");
+     } else {
+       DumpPC(writerfn, arg, stack[i], "    ");
+git diff --git a/src/raw_logging.cc b/src/raw_logging.cc
+index 4028ccc..483e639 100644
+--- a/src/raw_logging.cc
++++ b/src/raw_logging.cc
+@@ -123,8 +123,8 @@
+ GLOG_ATTRIBUTE_FORMAT(printf, 4, 5)
+ void RawLog__(LogSeverity severity, const char* file, int line,
+               const char* format, ...) {
+-  if (!(FLAGS_logtostdout || FLAGS_logtostderr ||
+-        severity >= FLAGS_stderrthreshold || FLAGS_alsologtostderr ||
++  if (!(FLAGS__logtostdout || FLAGS__logtostderr ||
++        severity >= FLAGS__stderrthreshold || FLAGS__alsologtostderr ||
+         !IsGoogleLoggingInitialized())) {
+     return;  // this stderr log message is suppressed
+   }
+git diff --git a/src/logging.cc b/src/logging.cc
 index 4028ccc..483e639 100644
 --- a/src/logging.cc
 +++ b/src/logging.cc
-@@ -1743,6 +1743,23 @@ ostream& LogMessage::stream() {
-   return data_->stream_;
+@@ -113,21 +113,21 @@
+   return memchr("tTyY1\0", valstr[0], 6) != NULL;
  }
-
+ 
+-GLOG_DEFINE_bool(timestamp_in_logfile_name,
++GLOG_DEFINE_bool(_timestamp_in_logfile_name,
+                  BoolFromEnv("GOOGLE_TIMESTAMP_IN_LOGFILE_NAME", true),
+                  "put a timestamp at the end of the log file name");
+-GLOG_DEFINE_bool(logtostderr, BoolFromEnv("GOOGLE_LOGTOSTDERR", false),
++GLOG_DEFINE_bool(_logtostderr, BoolFromEnv("GOOGLE_LOGTOSTDERR", false),
+                  "log messages go to stderr instead of logfiles");
+-GLOG_DEFINE_bool(alsologtostderr, BoolFromEnv("GOOGLE_ALSOLOGTOSTDERR", false),
++GLOG_DEFINE_bool(_alsologtostderr, BoolFromEnv("GOOGLE_ALSOLOGTOSTDERR", false),
+                  "log messages go to stderr in addition to logfiles");
+-GLOG_DEFINE_bool(colorlogtostderr, false,
++GLOG_DEFINE_bool(_colorlogtostderr, false,
+                  "color messages logged to stderr (if supported by terminal)");
+-GLOG_DEFINE_bool(colorlogtostdout, false,
++GLOG_DEFINE_bool(_colorlogtostdout, false,
+                  "color messages logged to stdout (if supported by terminal)");
+-GLOG_DEFINE_bool(logtostdout, BoolFromEnv("GOOGLE_LOGTOSTDOUT", false),
++GLOG_DEFINE_bool(_logtostdout, BoolFromEnv("GOOGLE_LOGTOSTDOUT", false),
+                  "log messages go to stdout instead of logfiles");
+ #ifdef GLOG_OS_LINUX
+-GLOG_DEFINE_bool(drop_log_memory, true, "Drop in-memory buffers of log contents. "
++GLOG_DEFINE_bool(_drop_log_memory, true, "Drop in-memory buffers of log contents. "
+                  "Logs can grow very quickly and they are rarely read before they "
+                  "need to be evicted from memory. Instead, drop them from memory "
+                  "as soon as they are flushed to disk.");
+@@ -138,35 +138,35 @@
+ //
+ // The default is ERROR instead of FATAL so that users can see problems
+ // when they run a program without having to look in another file.
+-DEFINE_int32(stderrthreshold,
++DEFINE_int32(_stderrthreshold,
+              GOOGLE_NAMESPACE::GLOG_ERROR,
+              "log messages at or above this level are copied to stderr in "
+              "addition to logfiles.  This flag obsoletes --alsologtostderr.");
+ 
+-GLOG_DEFINE_string(alsologtoemail, "",
++GLOG_DEFINE_string(_alsologtoemail, "",
+                    "log messages go to these email addresses "
+                    "in addition to logfiles");
+-GLOG_DEFINE_bool(log_prefix, true,
++GLOG_DEFINE_bool(_log_prefix, true,
+                  "Prepend the log prefix to the start of each log line");
+-GLOG_DEFINE_bool(log_year_in_prefix, true,
++GLOG_DEFINE_bool(_log_year_in_prefix, true,
+                  "Include the year in the log prefix");
+-GLOG_DEFINE_int32(minloglevel, 0, "Messages logged at a lower level than this don't "
++GLOG_DEFINE_int32(_minloglevel, 0, "Messages logged at a lower level than this don't "
+                   "actually get logged anywhere");
+-GLOG_DEFINE_int32(logbuflevel, 0,
++GLOG_DEFINE_int32(_logbuflevel, 0,
+                   "Buffer log messages logged at this level or lower"
+                   " (-1 means don't buffer; 0 means buffer INFO only;"
+                   " ...)");
+-GLOG_DEFINE_int32(logbufsecs, 30,
++GLOG_DEFINE_int32(_logbufsecs, 30,
+                   "Buffer log messages for at most this many seconds");
+ 
+-GLOG_DEFINE_int32(logcleansecs, 60 * 5, // every 5 minutes
++GLOG_DEFINE_int32(_logcleansecs, 60 * 5, // every 5 minutes
+                   "Clean overdue logs every this many seconds");
+ 
+-GLOG_DEFINE_int32(logemaillevel, 999,
++GLOG_DEFINE_int32(_logemaillevel, 999,
+                   "Email log messages logged at this level or higher"
+                   " (0 means email all; 3 means email FATAL only;"
+                   " ...)");
+-GLOG_DEFINE_string(logmailer, "",
++GLOG_DEFINE_string(_logmailer, "",
+                    "Mailer used to send logging email");
+ 
+ // Compute the default value for --log_dir
+@@ -183,22 +183,22 @@
+   return "";
+ }
+ 
+-GLOG_DEFINE_int32(logfile_mode, 0664, "Log file mode/permissions.");
++GLOG_DEFINE_int32(_logfile_mode, 0664, "Log file mode/permissions.");
+ 
+-GLOG_DEFINE_string(log_dir, DefaultLogDir(),
++GLOG_DEFINE_string(_log_dir, DefaultLogDir(),
+                    "If specified, logfiles are written into this directory instead "
+                    "of the default logging directory.");
+-GLOG_DEFINE_string(log_link, "", "Put additional links to the log "
++GLOG_DEFINE_string(_log_link, "", "Put additional links to the log "
+                    "files in this directory");
+ 
+-GLOG_DEFINE_uint32(max_log_size, 1800,
++GLOG_DEFINE_uint32(_max_log_size, 1800,
+                    "approx. maximum log file size (in MB). A value of 0 will "
+                    "be silently overridden to 1.");
+ 
+-GLOG_DEFINE_bool(stop_logging_if_full_disk, false,
++GLOG_DEFINE_bool(_stop_logging_if_full_disk, false,
+                  "Stop attempting to log to disk if the disk is full.");
+ 
+-GLOG_DEFINE_string(log_backtrace_at, "",
++GLOG_DEFINE_string(_log_backtrace_at, "",
+                    "Emit a backtrace when logging at file:linenum.");
+ 
+-GLOG_DEFINE_bool(log_utc_time, false,
++GLOG_DEFINE_bool(_log_utc_time, false,
+@@ -351,8 +351,8 @@
+ 
+ // Safely get max_log_size, overriding to 1 if it somehow gets defined as 0
+ static uint32 MaxLogSize() {
+-  return (FLAGS_max_log_size > 0 && FLAGS_max_log_size < 4096
+-              ? FLAGS_max_log_size
++  return (FLAGS__max_log_size > 0 && FLAGS__max_log_size < 4096
++              ? FLAGS__max_log_size
+               : 1);
+ }
+ 
+@@ -721,7 +721,7 @@
+   // Prevent any subtle race conditions by wrapping a mutex lock around
+   // all this stuff.
+   MutexLock l(&log_mutex);
+-  FLAGS_stderrthreshold = min_severity;
++  FLAGS__stderrthreshold = min_severity;
+ }
+ 
+ inline void LogDestination::LogToStderr() {
+@@ -747,8 +747,8 @@
+                                          const char* message, size_t len) {
+   bool is_stdout = (output == stdout);
+   const GLogColor color = (LogDestination::terminal_supports_color() &&
+-                           ((!is_stdout && FLAGS_colorlogtostderr) ||
+-                            (is_stdout && FLAGS_colorlogtostdout)))
++                           ((!is_stdout && FLAGS__colorlogtostderr) ||
++                            (is_stdout && FLAGS__colorlogtostdout)))
+                               ? SeverityToColor(severity)
+                               : COLOR_DEFAULT;
+ 
+@@ -789,7 +789,7 @@
+   FILE* output = stdout;
+   // We also need to send logs to the stderr when the severity is
+   // higher or equal to the stderr threshold.
+-  if (severity >= FLAGS_stderrthreshold) {
++  if (severity >= FLAGS__stderrthreshold) {
+     output = stderr;
+   }
+   ColoredWriteToStderrOrStdout(output, severity, message, len);
+@@ -808,7 +808,7 @@
+ 
+ inline void LogDestination::MaybeLogToStderr(LogSeverity severity,
+ 					     const char* message, size_t message_len, size_t prefix_len) {
+-  if ((severity >= FLAGS_stderrthreshold) || FLAGS_alsologtostderr) {
++  if ((severity >= FLAGS__stderrthreshold) || FLAGS__alsologtostderr) {
+     ColoredWriteToStderr(severity, message, message_len);
+ #ifdef GLOG_OS_WINDOWS
+     (void) prefix_len;
+@@ -835,8 +835,8 @@
+ inline void LogDestination::MaybeLogToEmail(LogSeverity severity,
+ 					    const char* message, size_t len) {
+   if (severity >= email_logging_severity_ ||
+-      severity >= FLAGS_logemaillevel) {
+-    string to(FLAGS_alsologtoemail);
++      severity >= FLAGS__logemaillevel) {
++    string to(FLAGS__alsologtoemail);
+     if (!addresses_.empty()) {
+       if (!to.empty()) {
+         to += ",";
+@@ -862,7 +862,7 @@
+                                               time_t timestamp,
+ 					      const char* message,
+ 					      size_t len) {
+-  const bool should_flush = severity > FLAGS_logbuflevel;
++  const bool should_flush = severity > FLAGS__logbuflevel;
+   LogDestination* destination = log_destination(severity);
+   destination->logger_->Write(should_flush, timestamp, message, len);
+ }
+@@ -871,9 +871,9 @@
+                                              time_t timestamp,
+                                              const char* message,
+                                              size_t len) {
+-  if (FLAGS_logtostdout) {  // global flag: never log to file
++  if (FLAGS__logtostdout) {  // global flag: never log to file
+     ColoredWriteToStdout(severity, message, len);
+-  } else if (FLAGS_logtostderr) {  // global flag: never log to file
++  } else if (FLAGS__logtostderr) {  // global flag: never log to file
+     ColoredWriteToStderr(severity, message, len);
+   } else {
+     for (int i = severity; i >= 0; --i) {
+@@ -1032,32 +1032,32 @@
+     bytes_since_flush_ = 0;
+   }
+   // Figure out when we are due for another flush.
+-  const int64 next = (FLAGS_logbufsecs
++  const int64 next = (FLAGS__logbufsecs
+                       * static_cast<int64>(1000000));  // in usec
+   next_flush_time_ = CycleClock_Now() + UsecToCycles(next);
+ }
+ 
+ bool LogFileObject::CreateLogfile(const string& time_pid_string) {
+   string string_filename = base_filename_;
+-  if (FLAGS_timestamp_in_logfile_name) {
++  if (FLAGS__timestamp_in_logfile_name) {
+     string_filename += time_pid_string;
+   }
+   string_filename += filename_extension_;
+   const char* filename = string_filename.c_str();
+   //only write to files, create if non-existant.
+   int flags = O_WRONLY | O_CREAT;
+-  if (FLAGS_timestamp_in_logfile_name) {
++  if (FLAGS__timestamp_in_logfile_name) {
+     //demand that the file is unique for our timestamp (fail if it exists).
+     flags = flags | O_EXCL;
+   }
+-  int fd = open(filename, flags, FLAGS_logfile_mode);
++  int fd = open(filename, flags, FLAGS__logfile_mode);
+   if (fd == -1) return false;
+ #ifdef HAVE_FCNTL
+   // Mark the file close-on-exec. We don't really care if this fails
+   fcntl(fd, F_SETFD, FD_CLOEXEC);
+ 
+   // Mark the file as exclusive write access to avoid two clients logging to the
+-  // same file. This applies particularly when !FLAGS_timestamp_in_logfile_name
++  // same file. This applies particularly when !FLAGS__timestamp_in_logfile_name
+   // (otherwise open would fail because the O_EXCL flag on similar filename).
+   // locks are released on unlock or close() automatically, only after log is
+   // released.
+@@ -1083,7 +1083,7 @@
+   file_ = fdopen(fd, "a");  // Make a FILE*.
+   if (file_ == NULL) {  // Man, we're screwed!
+     close(fd);
+-    if (FLAGS_timestamp_in_logfile_name) {
++    if (FLAGS__timestamp_in_logfile_name) {
+       unlink(filename);  // Erase the half-baked evidence: an unusable log file, only if we just created it.
+     }
+     return false;
+@@ -1091,7 +1091,7 @@
+ #ifdef GLOG_OS_WINDOWS
+   // https://github.com/golang/go/issues/27638 - make sure we seek to the end to append
+   // empirically replicated with wine over mingw build
+-  if (!FLAGS_timestamp_in_logfile_name) {
++  if (!FLAGS__timestamp_in_logfile_name) {
+     if (fseek(file_, 0, SEEK_END) != 0) {
+       return false;
+     }
+@@ -1124,9 +1124,9 @@
+     }
+ 
+     // Make an additional link to the log file in a place specified by
+-    // FLAGS_log_link, if indicated
+-    if (!FLAGS_log_link.empty()) {
+-      linkpath = FLAGS_log_link + "/" + linkname;
++    // FLAGS__log_link, if indicated
++    if (!FLAGS__log_link.empty()) {
++      linkpath = FLAGS__log_link + "/" + linkname;
+       unlink(linkpath.c_str());                  // delete old one if it exists
+       if (symlink(filename, linkpath.c_str()) != 0) {
+         // silently ignore failures
+@@ -1165,7 +1165,7 @@
+     rollover_attempt_ = 0;
+ 
+     struct ::tm tm_time;
+-    if (FLAGS_log_utc_time) {
++    if (FLAGS__log_utc_time) {
+       gmtime_r(&timestamp, &tm_time);
+     } else {
+       localtime_r(&timestamp, &tm_time);
+@@ -1253,14 +1253,14 @@
+                        << ' '
+                        << setw(2) << tm_time.tm_hour << ':'
+                        << setw(2) << tm_time.tm_min << ':'
+-                       << setw(2) << tm_time.tm_sec << (FLAGS_log_utc_time ? " UTC\n" : "\n")
++                       << setw(2) << tm_time.tm_sec << (FLAGS__log_utc_time ? " UTC\n" : "\n")
+                        << "Running on machine: "
+                        << LogDestination::hostname() << '\n';
+ 
+     if(!g_application_fingerprint.empty()) {
+       file_header_stream << "Application fingerprint: " << g_application_fingerprint << '\n';
+     }
+-    const char* const date_time_format = FLAGS_log_year_in_prefix
++    const char* const date_time_format = FLAGS__log_year_in_prefix
+                                              ? "yyyymmdd hh:mm:ss.uuuuuu"
+                                              : "mmdd hh:mm:ss.uuuuuu";
+     file_header_stream << "Running duration (h:mm:ss): "
+@@ -1284,7 +1284,7 @@
+     // greater than 4096, thereby indicating an error.
+     errno = 0;
+     fwrite(message, 1, message_len, file_);
+-    if ( FLAGS_stop_logging_if_full_disk &&
++    if ( FLAGS__stop_logging_if_full_disk &&
+          errno == ENOSPC ) {  // disk full, stop writing to disk
+       stop_writing = true;  // until the disk is
+       return;
+@@ -1300,14 +1300,14 @@
+   }
+ 
+   // See important msgs *now*.  Also, flush logs at least every 10^6 chars,
+-  // or every "FLAGS_logbufsecs" seconds.
++  // or every "FLAGS__logbufsecs" seconds.
+   if ( force_flush ||
+        (bytes_since_flush_ >= 1000000) ||
+        (CycleClock_Now() >= next_flush_time_) ) {
+     FlushUnlocked();
+ #ifdef GLOG_OS_LINUX
+     // Only consider files >= 3MiB
+-    if (FLAGS_drop_log_memory && file_length_ >= (3U << 20U)) {
++    if (FLAGS__drop_log_memory && file_length_ >= (3U << 20U)) {
+       // Don't evict the most recent 1-2MiB so as not to impact a tailer
+       // of the log file and to avoid page rounding issue on linux < 4.7
+       uint32 total_drop_length =
+@@ -1348,7 +1348,7 @@
+ }
+ 
+ void LogCleaner::UpdateCleanUpTime() {
+-  const int64 next = (FLAGS_logcleansecs
++  const int64 next = (FLAGS__logcleansecs
+                       * 1000000);  // in usec
+   next_cleanup_time_ = CycleClock_Now() + UsecToCycles(next);
+ }
+@@ -1664,7 +1664,7 @@
+   //    I20201018 160715 f5d4fbb0 logging.cc:1153]
+   //    (log level, GMT year, month, date, time, thread_id, file basename, line)
+   // We exclude the thread_id for the default thread.
+-  if (FLAGS_log_prefix && (line != kNoLogPrefix)) {
++  if (FLAGS__log_prefix && (line != kNoLogPrefix)) {
+       std::ios saved_fmt(NULL);
+       saved_fmt.copyfmt(stream());
+       stream().fill('0');
+@@ -1672,7 +1672,7 @@
+       if (custom_prefix_callback == NULL) {
+     #endif
+           stream() << LogSeverityNames[severity][0];
+-          if (FLAGS_log_year_in_prefix) {
++          if (FLAGS__log_year_in_prefix) {
+             stream() << setw(4) << 1900 + logmsgtime_.year();
+           }
+           stream() << setw(2) << 1 + logmsgtime_.month()
+@@ -1703,11 +1703,11 @@
+   }
+   data_->num_prefix_chars_ = data_->stream_.pcount();
+ 
+-  if (!FLAGS_log_backtrace_at.empty()) {
++  if (!FLAGS__log_backtrace_at.empty()) {
+     char fileline[128];
+     snprintf(fileline, sizeof(fileline), "%s:%d", data_->basename_, line);
+ #ifdef HAVE_STACKTRACE
+-    if (FLAGS_log_backtrace_at == fileline) {
++    if (FLAGS__log_backtrace_at == fileline) {
+       string stacktrace;
+       DumpStackTraceToString(&stacktrace);
+       stream() << " (stacktrace:\n" << stacktrace << ") ";
+@@ -1741,12 +1741,29 @@
+ 
+ ostream& LogMessage::stream() {
+   return data_->stream_;
++}
++
 +namespace {
 +#if defined(__ANDROID__)
 +int AndroidLogLevel(const int severity) {
@@ -54,17 +611,22 @@ index 4028ccc..483e639 100644
 +    default:
 +      return ANDROID_LOG_INFO;
 +  }
-+}
+ }
 +#endif  // defined(__ANDROID__)
 +}  // namespace
-+
+ 
  // Flush buffered message, called by the destructor, or any other function
  // that needs to synchronize the log.
  void LogMessage::Flush() {
-@@ -1779,6 +1796,12 @@ void LogMessage::Flush() {
+-  if (data_->has_been_flushed_ || data_->severity_ < FLAGS_minloglevel) {
++  if (data_->has_been_flushed_ || data_->severity_ < FLAGS__minloglevel) {
+     return;
+   }
+ 
+@@ -1779,6 +1796,12 @@
    }
    LogDestination::WaitForSinks(data_);
-
+ 
 +#if defined(__ANDROID__)
 +  const int level = AndroidLogLevel((int)data_->severity_);
 +  const std::string text = std::string(data_->message_text_);
@@ -74,3 +636,71 @@ index 4028ccc..483e639 100644
    if (append_newline) {
      // Fix the ostrstream back how it was before we screwed with it.
      // It's 99.44% certain that we don't need to worry about doing this.
+@@ -1808,7 +1831,7 @@
+ void ReprintFatalMessage() {
+   if (fatal_message[0]) {
+     const size_t n = strlen(fatal_message);
+-    if (!FLAGS_logtostderr) {
++    if (!FLAGS__logtostderr) {
+       // Also write to stderr (don't color to avoid terminal checks)
+       WriteToStderr(fatal_message, n);
+     }
+@@ -1837,8 +1860,8 @@
+   // global flag: never log to file if set.  Also -- don't log to a
+   // file if we haven't parsed the command line flags to get the
+   // program name.
+-  if (FLAGS_logtostderr || FLAGS_logtostdout || !IsGoogleLoggingInitialized()) {
+-    if (FLAGS_logtostdout) {
++  if (FLAGS__logtostderr || FLAGS__logtostdout || !IsGoogleLoggingInitialized()) {
++    if (FLAGS__logtostdout) {
+       ColoredWriteToStdout(data_->severity_, data_->message_text_,
+                            data_->num_chars_to_log_);
+     } else {
+@@ -1891,7 +1914,7 @@
+       fatal_time = logmsgtime_.timestamp();
+     }
+ 
+-    if (!FLAGS_logtostderr && !FLAGS_logtostdout) {
++    if (!FLAGS__logtostderr && !FLAGS__logtostdout) {
+       for (int i = 0; i < NUM_SEVERITIES; ++i) {
+         if (LogDestination::log_destinations_[i]) {
+           LogDestination::log_destinations_[i]->logger_->Write(true, 0, "", 0);
+@@ -2238,7 +2261,7 @@
+               subject, body, dest);
+     }
+ 
+-    string logmailer = FLAGS_logmailer;
++    string logmailer = FLAGS__logmailer;
+     if (logmailer.empty()) {
+         logmailer = "/bin/mail";
+     }
+@@ -2338,9 +2361,9 @@
+   if (logging_directories_list == NULL) {
+     logging_directories_list = new vector<string>;
+ 
+-    if ( !FLAGS_log_dir.empty() ) {
++    if ( !FLAGS__log_dir.empty() ) {
+       // A dir was specified, we should use it
+-      logging_directories_list->push_back(FLAGS_log_dir);
++      logging_directories_list->push_back(FLAGS__log_dir);
+     } else {
+       GetTempDirectories(logging_directories_list);
+ #ifdef GLOG_OS_WINDOWS
+@@ -2654,7 +2677,7 @@
+ 
+ LogMessageTime::LogMessageTime(std::time_t timestamp, WallTime now) {
+   std::tm t;
+-  if (FLAGS_log_utc_time)
++  if (FLAGS__log_utc_time)
+     gmtime_r(&timestamp, &t);
+   else
+     localtime_r(&timestamp, &t);
+@@ -2673,7 +2696,7 @@
+ void LogMessageTime::CalcGmtOffset() {
+   std::tm gmt_struct;
+   int isDst = 0;
+-  if ( FLAGS_log_utc_time ) {
++  if ( FLAGS__log_utc_time ) {
+     localtime_r(&timestamp_, &gmt_struct);
+     isDst = gmt_struct.tm_isdst;
+     gmt_struct = time_struct_;
