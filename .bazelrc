@@ -113,3 +113,25 @@ try-import %workspace%/.configure.bazelrc
 
 # This bazelrc file can be used for user-specific custom build settings.
 try-import %workspace%/.user.bazelrc
+build --action_env=PATH=$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:/bin
+build --host_action_env=PATH=$HOME/.pyenv/shims:/usr/local/bin:/usr/bin:/bin
+build --action_env=PYTHON3_BIN_PATH=$HOME/.pyenv/shims/versions/3.12.0/bin/python
+build --host_action_env=PYTHON3_BIN_PATH=$HOME/.pyenv/shims/versions/3.12.0/bin/python
+build --copt=-DWITH_ZLIB=OFF
+build --copt=-DBUILD_ZLIB=OFF
+build --host_copt=-DWITH_ZLIB=OFF
+build --host_copt=-DBUILD_ZLIB=OFF
+build --copt=-DFDOPEN_NO_REDEFINE
+build --copt=-Wno-error=macro-redefined
+build --host_copt=-DFDOPEN_NO_REDEFINE
+build --host_copt=-Wno-error=macro-redefined
+build --copt=-Wno-macro-redefined
+build --host_copt=-Wno-macro-redefined
+build --copt=-Ufdopen
+build --host_copt=-Ufdopen
+build --copt=-DHAVE_UNISTD_H=1
+build --host_copt=-DHAVE_UNISTD_H=1
+build --action_env=CPPFLAGS=-Ufdopen
+build --host_action_env=CPPFLAGS=-Ufdopen
+build --action_env=CFLAGS=-Ufdopen
+build --host_action_env=CFLAGS=-Ufdopen

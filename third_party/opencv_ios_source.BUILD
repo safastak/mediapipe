@@ -32,23 +32,46 @@ genrule(
     srcs = glob(["opencv-4.5.3/**"]),
     outs = ["opencv2.xcframework.zip"],
     cmd = "&&".join([
+        # --- START DEBUGGING ---
+        # --- FIX 1: Patch zutil.h for the fdopen error. ---
+        "ZUTIL_H_PATH=$(location opencv-4.5.3/3rdparty/zlib/zutil.h)",
+        "sed 's/.*define fdopen(fd,mode) NULL.*/\\/\\/ This line patched by MediaPipe build to fix Xcode issue./' $$ZUTIL_H_PATH > $$ZUTIL_H_PATH.patched",
+        "mv $$ZUTIL_H_PATH.patched $$ZUTIL_H_PATH",
+        
+        # --- FIX 2: Patch pngpriv.h to include <math.h> instead of <fp.h>. (Your excellent find!) ---
+        "PNGPRIV_H_PATH=$(location opencv-4.5.3/3rdparty/libpng/pngpriv.h)",
+        "sed 's/include <fp.h>/include <math.h>/' $$PNGPRIV_H_PATH > $$PNGPRIV_H_PATH.patched",
+        "mv $$PNGPRIV_H_PATH.patched $$PNGPRIV_H_PATH",
+
+        # --- FIX 3: Make `python` available by linking it to `python3`. ---
+        "TEMP_BIN_DIR=$$(pwd)/.temp_bin",
+        "mkdir -p $$TEMP_BIN_DIR",
+        # Create a new script named 'python' that will forward all arguments ("$$@") to python3.
+        "echo -e '#!/bin/bash\\npython3 \"$$@\"' > $$TEMP_BIN_DIR/python",
+        # Make our new 'python' script executable.
+        "chmod +x $$TEMP_BIN_DIR/python",
+        # Export the PATH to include our new command. This is the step you asked about.
+        "export PATH=$$TEMP_BIN_DIR:$$PATH",
+    
+
+        # The original command follows, and will now use the patched script.
         "$(location opencv-4.5.3/platforms/apple/build_xcframework.py) \
-        --iphonesimulator_archs arm64,x86_64 \
-        --iphoneos_archs arm64 \
-        --without dnn \
-        --without ml \
-        --without stitching \
-        --without photo \
-        --without objdetect \
-        --without gapi \
-        --without flann \
-        --without highgui \
-        --without videoio \
-        --disable PROTOBUF \
-        --disable-bitcode \
-        --disable-swift \
-        --build_only_specified_archs \
-        --out $(@D)",
+            --iphonesimulator_archs arm64,x86_64 \
+            --iphoneos_archs arm64 \
+            --without dnn \
+            --without ml \
+            --without stitching \
+            --without photo \
+            --without objdetect \
+            --without gapi \
+            --without flann \
+            --without highgui \
+            --without videoio \
+            --disable PROTOBUF \
+            --disable-bitcode \
+            --disable-swift \
+            --build_only_specified_archs \
+            --out $(@D)",
         "cd $(@D)",
         "zip --symlinks -r opencv2.xcframework.zip opencv2.xcframework",
     ]),
