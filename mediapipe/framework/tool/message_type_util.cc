@@ -155,7 +155,7 @@ class DescriptorReader {
 }  // namespace mediapipe
 
 int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
+  mediapipe_glog::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
   auto files = mediapipe::DescriptorReader::ReadFileDescriptorSet(
       absl::GetFlag(FLAGS_input_path));

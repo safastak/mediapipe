@@ -51,8 +51,8 @@ std::ostream& operator<<(std::ostream& out, const std::vector<Ts...>& v) {
 }  // namespace std
 
 namespace mediapipe {
-using LogSeverity = google::LogSeverity;
-const auto SetVLOGLevel = google::SetVLOGLevel;
+using LogSeverity = mediapipe_glog::LogSeverity;
+const auto SetVLOGLevel = mediapipe_glog::SetVLOGLevel;
 class LogEntry {
  public:
   LogEntry(LogSeverity severity, const struct ::tm* tm_time,
@@ -69,7 +69,7 @@ class LogEntry {
   absl::Time timestamp_;
   absl::string_view text_message_;
 };
-class LogSink : public google::LogSink {
+class LogSink : public mediapipe_glog::LogSink {
  public:
   virtual ~LogSink() = default;
   virtual void Send(const LogEntry& entry) = 0;
@@ -86,10 +86,10 @@ class LogSink : public google::LogSink {
   }
 };
 inline void AddLogSink(LogSink* destination) {
-  google::AddLogSink(destination);
+  mediapipe_glog::AddLogSink(destination);
 }
 inline void RemoveLogSink(LogSink* destination) {
-  google::RemoveLogSink(destination);
+  mediapipe_glog::RemoveLogSink(destination);
 }
 }  // namespace mediapipe
 

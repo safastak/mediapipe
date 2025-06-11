@@ -1,3 +1,38 @@
+diff --git a/bazel/glog.bzl b/bazel/glog.bzl
+index dacd934..d7b3d78 100644
+--- a/bazel/glog.bzl
++++ b/bazel/glog.bzl
+@@ -56,6 +56,7 @@
+         "-DGLOG_BAZEL_BUILD",
+         # Inject a C++ namespace.
+         "-DGOOGLE_NAMESPACE='%s'" % namespace,
++        "-D_START_GOOGLE_NAMESPACE_='%s'" % namespace,
+         "-DHAVE_CXX11_NULLPTR_T",
+         "-DHAVE_STDINT_H",
+         "-DHAVE_STRING_H",
+@@ -226,7 +227,7 @@
+         "@ac_cv_have_inttypes_h@": "0",
+         "@ac_cv_have_u_int16_t@": "0",
+         "@ac_cv_have_glog_export@": "0",
+-        "@ac_google_start_namespace@": "namespace google {",
++        "@ac_google_start_namespace@": "namespace %s {" % namespace,
+         "@ac_google_end_namespace@": "}",
+-        "@ac_google_namespace@": "google",
++        "@ac_google_namespace@": "%s" % namespace,
+     }
+diff --git a/src/glog/logging.h.in b/src/glog/logging.h.in
+index 4028ccc..483e639 100644
+--- a/src/glog/logging.h.in
++++ b/src/glog/logging.h.in
+@@ -753,7 +753,7 @@
+ // This declaration will allow use to use CHECK macros for user
+ // defined classes which have operator<< (e.g., stl_logging.h).
+ inline std::ostream& operator<<(
+-    std::ostream& out, const google::DummyClassToDefineOperator&) {
++    std::ostream& out, const @ac_google_namespace@::DummyClassToDefineOperator&) {
+   return out;
+ }
+ 
 diff --git a/src/logging.cc b/src/logging.cc
 index 4028ccc..483e639 100644
 --- a/src/logging.cc

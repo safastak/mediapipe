@@ -19,7 +19,7 @@
 #   * accepted values are MediaPipeTasksCommon, MediaPipeTasksText,
 #   * MediaPipeTasksVision, MediaPipeTasksAudio, MediaPipeTasksGenAIC,
 #   * MediaPipeTasksGenAI.
-#   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-dev
+#   * MPP_BUILD_VERSION: to specify the release version. defaults to 0.0.1-patch
 #   * IS_RELEASE_BUILD: set as true if this build should be a release build
 #   * ARCHIVE_FRAMEWORK: set as true if the framework should be archived
 #   * DEST_DIR: destination directory to which the framework will be copied.
@@ -32,7 +32,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
 fi
 
 BAZEL="${BAZEL:-$(which bazel)}"
-MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-dev}
+MPP_BUILD_VERSION=${MPP_BUILD_VERSION:-0.0.1-patch}
 MPP_ROOT_DIR=$(git rev-parse --show-toplevel)
 ARCHIVE_FRAMEWORK=${ARCHIVE_FRAMEWORK:-true}
 IS_RELEASE_BUILD=${IS_RELEASE_BUILD:-false}
