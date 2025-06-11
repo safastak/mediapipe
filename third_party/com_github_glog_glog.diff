@@ -704,3 +704,28 @@ index 4028ccc..483e639 100644
      localtime_r(&timestamp_, &gmt_struct);
      isDst = gmt_struct.tm_isdst;
      gmt_struct = time_struct_;
+diff --git a/src/base/mutex.h b/src/base/mutex.h
+index 4028ccc..483e639 100644
+--- a/src/base/mutex.h
++++ b/src/base/mutex.h
+@@ -152,6 +152,8 @@
+ #include <cassert>
+ #include <cstdlib>      // for abort()
+ 
++_START_GOOGLE_NAMESPACE_
++
+ #define MUTEX_NAMESPACE glog_internal_namespace_
+ 
+ namespace MUTEX_NAMESPACE {
+@@ -326,8 +328,10 @@
+ 
+ }  // namespace MUTEX_NAMESPACE
+ 
+-using namespace MUTEX_NAMESPACE;
++_END_GOOGLE_NAMESPACE_
+ 
++using namespace GOOGLE_NAMESPACE::MUTEX_NAMESPACE;
++
+ #undef MUTEX_NAMESPACE
+ 
+ #endif  /* #define GOOGLE_MUTEX_H__ */
